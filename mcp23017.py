@@ -34,9 +34,6 @@ class MCP23017():
         setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
         bus.write_byte_data(i2c_addr, 0x05, setup)
         
-        # self.state_a = 0x00 
-        # self.state_b = 0x00 
-        
         self.IODIRA = 0x00 # I/O mode (def 0xFF
         self.IODIRB = 0x01 # I/O mode (def 0xFF
         self.IPOLA = 0x02 # Input polarity
@@ -53,10 +50,13 @@ class MCP23017():
         self.GPIO = # Input status
         self.OLAT = # output status
         
-        self.read = bus.read_word_data
+        # Input state memory
+        # state is updated ....... sometimes
+        self.state_a = 0x00
+        self.state_b = 0x00
+
     
     def interrupt(self, queue):
-        
         blocks = Blocs()                                #        
         word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
         
