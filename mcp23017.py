@@ -3,8 +3,9 @@ import ctypes
 
 class MCP23017():
 
-    def __init__(self, bus=1, i2c_addr = 0x20, ):
-        """
+    def __init__(self, bus=1, i2c_addr = 0x20, ):           # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
+                                                            # i2c_addr is set with pins A0-A2
+        """                                                 
         Class for controlling any number of MCP23017 chips
         Works as an interface and an expansion to smbus2.
         Specifically brings support for interrupts
@@ -12,15 +13,15 @@ class MCP23017():
         
         # Init comms
         self.bus = smbus2.SMBus(bus)
-        self.write = bus.write_byte_data  # Consider write block..!
-        self.read = bus.read_byte_data
-        
-        ## CONSIDER USING READ BLOCK DATA!
-        ## IT MAY READ BOTH A AND B REGISTERS
-        ## INVESTIGATE!
-        
         self.i2c_addr  = i2c_addr
+        self.write = bus.write_byte_data  # Consider write block..!
+        self.read = bus.read_word_data
         
+        # Init chip for unified I/O
+        # Warning!
+        # The chip IOCON address schanges from 0x05 to 0x0A
+        # when BANK is changed.
+        # 
         BANK = 0 << 7 # seaquental adresses
         MIRROR = 1 << 6 # INT pins are internally connected
         SEQOP = 1 << 5 # seaquental mode disabled
@@ -28,18 +29,13 @@ class MCP23017():
         HAEN = 1 << 3
         ODR = 0 << 2 # int pin is not open drain output
         INTPOL = 1 << 1 # active high
-        
+        #
+        # Write the configuration
         setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
+        bus.write_byte_data(i2c_addr, 0x05, setup)
         
-        # Init chip for unified I/O
-        # Warning!
-        # The chip IOCON address schanges from 0x05 to 0x0A
-        # when BANK is changed.
-        # 
-        self.write(i2c_addr, 0x05, setup)
-        
-        self.state_a = 0x00
-        self.state_b = 0x00
+        # self.state_a = 0x00 
+        # self.state_b = 0x00 
         
         self.IODIRA = 0x00 # I/O mode (def 0xFF
         self.IODIRB = 0x01 # I/O mode (def 0xFF
@@ -57,17 +53,22 @@ class MCP23017():
         self.GPIO = # Input status
         self.OLAT = # output status
         
+        self.read = bus.read_word_data
     
     def interrupt(self, queue):
         
-        blocks = Blocs()
-        blocks.asByte = self.read(self.i2c_addr, self.INTFA)
-        for i in range(15): #length of block: a d_word?
-            if block[i] == 1:  # finds the bit
-                index = i # is this necessary?
-                break
-        blocks.asByte = self.read(self.i2c_addr, self.OLAT)
-        queue.put(block.index)   # the index of 1
+        blocks = Blocs()                                #        
+        word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
+        
+        for bank in [0,1]:                              # Iterate the two banks of bytes
+            blocks.asByte = word[bank]                  
+            for bit in range(7):                        # length of block is two bytes, a word
+                if block[bit] == 1:                     # when the bit is found
+                    index = (bank, bit)                 # its location is stored as index    # is this necessary?
+                    break                               # and the search stops.
+        word = self.read(self.i2c_addr, self.OLAT)      # Reads the Input Register: two bytes of data
+        blocks.asByte = word[index[0]]
+        queue.put(block.index[1])                       # the index of the 1-bit
         
     def readBit(self, index, address = self.OLAT):
     
@@ -97,14 +98,6 @@ class  Blocs_bits( ctypes.LittleEndianStructure ):
                     ("bit5",    c_uint8, 1),
                     ("bit6",    c_uint8, 1),
                     ("bit7",    c_uint8, 1),
-                    ("bit8",    c_uint8, 1),
-                    ("bit9",    c_uint8, 1),
-                    ("bit10",    c_uint8, 1),
-                    ("bit11",    c_uint8, 1),
-                    ("bit12",    c_uint8, 1),
-                    ("bit13",    c_uint8, 1),
-                    ("bit14",    c_uint8, 1),
-                    ("bit15",    c_uint8, 1),
                     ]
         
 class Blocks( ctypes.Union ):
