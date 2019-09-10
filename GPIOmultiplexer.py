@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# J.V.Ojala 10.09.2019
+# GPIOmultiplexer
+
 import MCP23017
 from RPi import GPIO
 
@@ -11,3 +16,22 @@ multiplexer automatically diverts the function call to the
 right module.
 '''
 
+def setmode(mode):
+    GPIO.setmode(mode)
+    
+def setup(channel, mode, pull_up):
+    if channel < 100:
+        GPIO.setup(channel, mode, pull_up)
+    else:
+        pass    # TBD
+    
+def input(channel):
+    if channel < 100:
+        GPIO.input(channel)
+    else:
+        pass    # read channel
+    
+def cleanup():
+    GPIO.cleanup()
+    
+    
