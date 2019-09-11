@@ -13,7 +13,7 @@ class MCP23017():
         
         # Init comms
         self.bus = smbus2.SMBus(bus)
-        self.i2c_addr  = i2c_addr
+        self.i2c_addr = i2c_addr
         self.write = bus.write_byte_data  # Consider write block..!
         self.read = bus.read_word_data
         
@@ -22,33 +22,33 @@ class MCP23017():
         # The chip IOCON address schanges from 0x05 to 0x0A
         # when BANK is changed.
         # 
-        BANK = 0 << 7 # seaquental adresses
+        BANK   = 0 << 7 # seaquental adresses
         MIRROR = 1 << 6 # INT pins are internally connected
-        SEQOP = 1 << 5 # seaquental mode disabled
+        SEQOP  = 1 << 5 # seaquental mode disabled
         DISSLW = 1 << 4
-        HAEN = 1 << 3
-        ODR = 0 << 2 # int pin is not open drain output
+        HAEN   = 1 << 3
+        ODR    = 0 << 2 # int pin is not open drain output
         INTPOL = 1 << 1 # active high
         #
         # Write the configuration
         setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
         bus.write_byte_data(i2c_addr, 0x05, setup)
         
-        self.IODIRA = 0x00 # I/O mode (def 0xFF
-        self.IODIRB = 0x01 # I/O mode (def 0xFF
-        self.IPOLA = 0x02 # Input polarity
-        self.IPOLB = 0x03
+        self.IODIRA   = 0x00 # I/O mode (def 0xFF
+        self.IODIRB   = 0x01 # I/O mode (def 0xFF
+        self.IPOLA    = 0x02 # Input polarity
+        self.IPOLB    = 0x03
         self.GPINTENA = 0x04 # Interrupt on change
         self.GPINTENB = 0x05
-        self.IOCON = 0A  # BANK SEQOP DISSW HEAN ODR INTPOL
+        self.IOCON    = 0A  # BANK SEQOP DISSW HEAN ODR INTPOL
         
-        self.INTFA = 0E # Interrupt activated flag
-        self.INTFB = 0F # Interrupt activated flag
-        self.INTCAPA = 10 #Interrupt capture register (resets when read)
-        self.INTCAPB = 11 #Interrupt capture register (resets when read)
+        self.INTFA    = 0E # Interrupt activated flag
+        self.INTFB    = 0F # Interrupt activated flag
+        self.INTCAPA  = 10 #Interrupt capture register (resets when read)
+        self.INTCAPB  = 11 #Interrupt capture register (resets when read)
         
-        self.GPIO = # Input status
-        self.OLAT = # output status
+        self.GPIO     = # Input status
+        self.OLAT     = # output status
         
         # Input state memory
         # state is updated ....... sometimes
@@ -57,7 +57,7 @@ class MCP23017():
 
     
     def interrupt(self, queue):
-        blocks = Blocs()                                #        
+        blocks = Blocs()                                # 
         word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
         
         for bank in [0,1]:                              # Iterate the two banks of bytes
