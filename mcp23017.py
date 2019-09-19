@@ -65,7 +65,7 @@ class MCP23017():
         bus.write_word_data(i2c_addr, 0x05, setup)
     
     def interrupt(self, queue):
-        blocks = Blocs()                                # 
+        # blocks = Blocs()                                # 
         word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
 
         for bank in [0,1]:                              # Iterate the two banks of bytes
@@ -88,6 +88,7 @@ class MCP23017():
         #return blocks.index
         
     def writeBit(self, bit, index, address = self.OLAT):
+        pass
             
 # from code example from https://wiki.python.org/moin/BitManipulation 
 # "Single bits"
