@@ -47,66 +47,60 @@ class MCP23017():
         self.IPOLB = 0x03
         self.GPINTENA = 0x04 # Interrupt on change
         self.GPINTENB = 0x05
-        self.IOCON = 0A  # BANK SEQOP DISSW HEAN ODR INTPOL
+        self.IOCON = 0x0A  # BANK SEQOP DISSW HEAN ODR INTPOL
         
-        self.INTFA = 0E # Interrupt activated flag
-        self.INTFB = 0F # Interrupt activated flag
-        self.INTCAPA = 10 #Interrupt capture register (resets when read)
-        self.INTCAPB = 11 #Interrupt capture register (resets when read)
+        self.INTFA = 0x0E # Interrupt activated flag
+        self.INTFB = 0x0F # Interrupt activated flag
+        self.INTCAPA = 0x10 #Interrupt capture register (resets when read)
+        self.INTCAPB = 0x11 #Interrupt capture register (resets when read)
         
-        self.GPIO = # Input status
-        self.OLAT = # output status
+        self.GPIO = 0x12 # Input status
+        self.OLAT = 0x14 # output status
         
     
     def interrupt(self, queue):
         
-        blocks = Blocs()
+        blocks = Blocks()
         blocks.asByte = self.read(self.i2c_addr, self.INTFA)
-        for i in range(15): #length of block: a d_word?
-            if block[i] == 1:  # finds the bit
-                index = i # is this necessary?
+        for i in range(15):     # length of block: 16 bits / d_word
+            if blocks[i] == 1:  # finds the bit
+                index = i       # is this necessary?
                 break
         blocks.asByte = self.read(self.i2c_addr, self.OLAT)
-        queue.put(block.index)   # the index of 1
+        queue.put(blocks[index])   # the index of 1
         
-    def readBit(self, index, address = self.OLAT):
-    
-        blocks = Blocs()
+    def readBit(self, index, address = None):
+        if address == None:
+            address = self.OLAT
+        blocks = Blocks()
         blocks.asByte = self.read(self.i2c_addr, self.INTCAPA, address)
         return blocks.index
 
-    def write():
+    #read_word_data(i2c_addr, register, force=None)
+
+    # def write():
+    #     pass
     
-    def run():
-        
-        
-        
-        while True:
-            time.sleep(10)
+    # def run():
+    #     while True:
+    #         time.sleep(10)
             
 
+# Tools to handle bit operations
 # from code example from wiki.python.org "BitManipulation"
-
+#
 class  Blocs_bits( ctypes.LittleEndianStructure ):
     _fields_ = [
-                    ("bit0",    c_uint8, 1),
-                    ("bit1",    c_uint8, 1),
-                    ("bit2",    c_uint8, 1),
-                    ("bit3",    c_uint8, 1),
-                    ("bit4",    c_uint8, 1),
-                    ("bit5",    c_uint8, 1),
-                    ("bit6",    c_uint8, 1),
-                    ("bit7",    c_uint8, 1),
-                    ("bit8",    c_uint8, 1),
-                    ("bit9",    c_uint8, 1),
-                    ("bit10",    c_uint8, 1),
-                    ("bit11",    c_uint8, 1),
-                    ("bit12",    c_uint8, 1),
-                    ("bit13",    c_uint8, 1),
-                    ("bit14",    c_uint8, 1),
-                    ("bit15",    c_uint8, 1),
+                    ("bit0",  c_uint8, 1),
+                    ("bit1",  c_uint8, 1),
+                    ("bit2",  c_uint8, 1),
+                    ("bit3",  c_uint8, 1),
+                    ("bit4",  c_uint8, 1),
+                    ("bit5",  c_uint8, 1),
+                    ("bit6",  c_uint8, 1),
+                    ("bit7",  c_uint8, 1),
                     ]
-        
+
 class Blocks( ctypes.Union ):
     _anonymous_ = ("bit")
     _field_ = [
@@ -114,4 +108,6 @@ class Blocks( ctypes.Union ):
         ("asByte", c_uint8)
         ]
         
-#
+
+if __name__ == '__main__':
+    pass
