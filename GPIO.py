@@ -3,9 +3,6 @@
 # J.V.Ojala 10.09.2019
 # GPIOmultiplexer
 
-import MCP23017
-from RPi import GPIO
-
 '''
 Intended to function as a wrapper for mcp23017 and RPi.GPIO, 
 so thay may be called as one.
@@ -33,11 +30,11 @@ from mcp23017 import MCP23017
 class GPIO():
 
     def __init__(self):
-        self.PUD_DOWN = 0
-        self.PUD_UP = 1
+        self.PUD_DOWN = 21
+        self.PUD_UP = 22
         
-        self.IN = 0
-        self.OUT = 1
+        self.IN = 1
+        self.OUT = 0
     
     def setmode(self, mode):
         RGPIO.setmode(mode)
@@ -45,19 +42,10 @@ class GPIO():
     
     def setup(self, channel, mode, pull_up):
         if channel < 100:
-            if pull_up == self.PUD_DOWN:
-                pull_up = RGPIO.PUD_DOWN
-            elif pull_up == self.PUD_UP:
-                pull_up = RGPUO.PUD_UP
-            
-            if mode == self.IN:
-                mode = RGPIO.IN
-            elif mode == self.OUT:
-                mode = RGPIO.OUT
                 
-            RGPIO.setup(channel, mode, pull_up_down=pull_up)
+            RGPIO.setup(channel, mode, pull_up_down=self.PUD_UP)
             
-        else # elif channel >= 100:
+        else: # elif channel >= 100:
             MCP23017.setup(channel, mode, pull_up)
             
     def input(self, channel):
