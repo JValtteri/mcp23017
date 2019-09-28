@@ -6,6 +6,22 @@
 import smbus2
 import ctypes
 
+IODIRA = 0x00 # I/O mode (def 0xFF
+IODIRB = 0x01 # I/O mode (def 0xFF
+IPOLA = 0x02 # Input polarity
+IPOLB = 0x03
+GPINTENA = 0x04 # Interrupt on change
+GPINTENB = 0x05
+IOCON = 0x0A  # BANK SEQOP DISSW HEAN ODR INTPOL
+
+INTFA = 0x0E # Interrupt activated flag
+INTFB = 0x0F # Interrupt activated flag
+INTCAPA = 0x10 #Interrupt capture register (resets when read)
+INTCAPB = 0x11 #Interrupt capture register (resets when read)
+
+GPIO = 0x12 # Input status
+OLAT = 0x14 # output status
+
 class MCP23017():
 
     def __init__(self, bus=1, i2c_addr = 0x20, ):           # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
@@ -24,29 +40,16 @@ class MCP23017():
         self.write_word = bus.write_word_data  # Consider write block..!
         self.read_word = bus.read_word_data
         
-
-        self.IODIRA = 0x00 # I/O mode (def 0xFF
-        self.IODIRB = 0x01 # I/O mode (def 0xFF
-        self.IPOLA = 0x02 # Input polarity
-        self.IPOLB = 0x03
-        self.GPINTENA = 0x04 # Interrupt on change
-        self.GPINTENB = 0x05
-        self.IOCON = 0x0A  # BANK SEQOP DISSW HEAN ODR INTPOL
-        
-        self.INTFA = 0x0E # Interrupt activated flag
-        self.INTFB = 0x0F # Interrupt activated flag
-        self.INTCAPA = 0x10 #Interrupt capture register (resets when read)
-        self.INTCAPB = 0x11 #Interrupt capture register (resets when read)
-        
-        self.GPIO = 0x12 # Input status
-        self.OLAT = 0x14 # output status
-        
         # Input state memory
         # state is updated ....... sometimes
-        self.state_a = 0x00
-        self.state_b = 0x00
+        # self.state_a = 0x00
+        # self.state_b = 0x00
 
-    def setmode(arg=''):
+        self.setmode()
+
+        print("INITIALIZED")
+
+    def setmode(self, arg=''):
         # Init chip for unified I/O
         # Warning!
         # The chip IOCON address schanges from 0x05 to 0x0A
@@ -62,24 +65,27 @@ class MCP23017():
         #
         # Write the configuration
         setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
-        bus.write_word_data(i2c_addr, 0x05, setup)
-    
-    def interrupt(self, queue):
-        # blocks = Blocs()                                # 
-        word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
+        self.bus.write_word_data(self.i2c_addr, 0x05, setup)
 
-        for bank in [0,1]:                              # Iterate the two banks of bytes
-            blocks.asByte = word[bank]                  
-            for bit in range(7):                        # length of block is two bytes, a word
-                if block[bit] == 1:                     # when the bit is found
-                    index = (bank, bit)                 # its location is stored as index    # is this necessary?
-                    break                               # and the search stops.
-        word = self.read(self.i2c_addr, self.OLAT)      # Reads the Input Register: two bytes of data
+    def setup(self, pin_index, mode, pull_up=None):
+        # pin_index is the input pin (address)
+        # mode is "in or out"
+        # pull_up is internal pull_up resistor
+        pass
+
+        if mode ==  1: # INPUT
+            word = self.read_word(self.i2c_addr, IODIRA)
+            setBit(word, pin_index)
+
+        elif mode == 0: # OUTPUT
+            word = self.read_word(self.i2c_addr, IODIRA)
+            clearBit(word, pin_index)
         
-        blocks.asByte = word[index[0]]
-        queue.put(block.index[1])                       # the index of the 1-bit
-        
-    def readBit(self, index, address = self.OLAT):
+        else:
+            raise ValueError
+
+    
+    def readBit(self, index, address = OLAT):
         word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
         
@@ -87,9 +93,25 @@ class MCP23017():
         #blocks.asByte = self.read(self.i2c_addr, self.INTCAPA, address)
         #return blocks.index
         
-    def writeBit(self, bit, index, address = self.OLAT):
+    def writeBit(self, bit, index, address = OLAT):
         pass
-            
+
+    # def interrupt(self, queue):
+    #     # blocks = Blocs()                              # 
+    #     word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
+
+    #     for bank in [0,1]:                              # Iterate the two banks of bytes
+    #         blocks.asByte = word[bank]                  
+    #         for bit in range(7):                        # length of block is two bytes, a word
+    #             if block[bit] == 1:                     # when the bit is found
+    #                 index = (bank, bit)                 # its location is stored as index    # is this necessary?
+    #                 break                               # and the search stops.
+    #     word = self.read(self.i2c_addr, self.OLAT)      # Reads the Input Register: two bytes of data
+        
+    #     blocks.asByte = word[index[0]]
+    #     queue.put(block.index[1])                       # the index of the 1-bit
+
+
 # from code example from https://wiki.python.org/moin/BitManipulation 
 # "Single bits"
 
@@ -119,7 +141,6 @@ def clearBit(int_type, offset):
 def toggleBit(int_type, offset):
     mask = 1 << offset
     return(int_type ^ mask)
-
 
 
 # from code example from https://wiki.python.org/moin/BitManipulation 
