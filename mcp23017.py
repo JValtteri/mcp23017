@@ -121,16 +121,17 @@ class MCP23017():
             setBit(word, pin_index)
 
         # PULL-DOWN
-        elif mode == 21:
+        elif pull_up == 21:
             clearBit(word, pin_index)
 
-        if mode in [22, 21]:
+        if pull_up in [22, 21]:
             self.write_word(self.i2c_addr, GPPU, word)
         else:
             raise ValueError("invalid pull-up mode")
 
     def input(self, pin_index):
         word = self.read_word(self.i2c_addr, OLAT)
+        print(bin(word))        #debug
         state = testBit(word, pin_index)
         return state
 
