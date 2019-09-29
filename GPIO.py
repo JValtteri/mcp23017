@@ -18,7 +18,7 @@ From MCP23017 import GPIO
 no other code changes required.
 Normal RPi GPIO is pins are XX, 
 first expander is 1XX, and
-second expander is 2XX
+second expander is 2XX, etc.
 
 multiplexer automatically diverts the function call to the 
 right module.
@@ -28,32 +28,75 @@ from RPi import GPIO as RGPIO
 from mcp23017 import MCP23017
 
 class GPIO():
+    PUD_DOWN = 21
+    PUD_UP = 22
+    
+    IN = 1
+    OUT = 0
 
-    def __init__(self):
-        self.PUD_DOWN = 21
-        self.PUD_UP = 22
-        
-        self.IN = 1
-        self.OUT = 0
-    
-    def setmode(self, mode):
+    BCM = RGPIO.BCM
+
+    @staticmethod
+    def setmode(mode=BCM):
         RGPIO.setmode(mode)
-        MCP23017.setmode(mode)
-    
-    def setup(self, channel, mode, pull_up):
+        GPIO.expanders = (
+            MCP23017(
+                bus_addr=1,
+                i2c_addr=0x20
+            ),
+            MCP23017(
+                bus_addr=1,
+                i2c_addr=0x21
+            ),
+            MCP23017(
+                bus_addr=1,
+                i2c_addr=0x22
+            )
+
+        )
+
+        for expander in GPIO.expanders:
+            expander.setmode(mode)
+
+    @staticmethod
+    def setup(channel, mode, pull_up):
+
+        # INTEGRATED GPIO
         if channel < 100:
-                
-            RGPIO.setup(channel, mode, pull_up_down=self.PUD_UP)
-            
-        else: # elif channel >= 100:
-            MCP23017.setup(channel, mode, pull_up)
-            
-    def input(self, channel):
+            RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
+        
+        # EXPANDER 0
+        elif channel < 200:
+            GPIO.expanders[0].setup(channel-100, mode, pull_up)
+    
+        # EXPANDER 1
+        elif channel < 300:
+            GPIO.expanders[1].setup(channel-200, mode, pull_up)
+
+        # EXPANDER 2
+        elif channel < 400:
+            GPIO.expanders[1].setup(channel-300, mode, pull_up)
+
+    @staticmethod
+    def input(channel):
+
         if channel < 100:
             return RGPIO.input(channel)
-        else:
-            return MCP23017.input(channel)    # read channel
 
+        # EXPANDER 0
+        elif channel < 200:
+            return GPIO.expanders[0].input(channel-100)
+    
+        # EXPANDER 1
+        elif channel < 300:
+            return GPIO.expanders[1].input(channel-200)
+
+        # EXPANDER 2
+        elif channel < 400:
+            return GPIO.expanders[2].input(channel-300)
+
+    @staticmethod
     def cleanup():
         GPIO.cleanup()
-        MCP23017.cleanup()
+        for expander in GPIO.expanders:
+            expander.cleanup()

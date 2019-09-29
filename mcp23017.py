@@ -3,28 +3,52 @@
 # J.V.Ojala 10.09.2019
 # mcp23017
 
-import smbus2
-import ctypes
+#   MCP23017 PINOUT
+#
+#  GPB0 - \_/ - GPA7
+#  GPB1 -     - GPA6
+#  GPB2 -     - GPA5
+#  GPB3 -     - GPA4
+#  GPB4 -     - GPA3
+#  GPB5 -     - GPA2
+#  GPB6 -     - GPA1
+#  GPB7 -     - GPA0
+# + VDD -     - INTA
+# - VSS -     - INTB
+#    NC -     - RESET
+#   SCL -     - A2
+#   SDA -     - A1
+#    NC - ___ - A0
 
-IODIRA = 0x00 # I/O mode (def 0xFF
-IODIRB = 0x01 # I/O mode (def 0xFF
-IPOLA = 0x02 # Input polarity
+
+import smbus2
+# import ctypes
+
+IODIRA = 0x00   # I/O mode (def 0xFF
+IODIRB = 0x01   # I/O mode (def 0xFF
+IPOLA = 0x02    # Input polarity
 IPOLB = 0x03
 GPINTENA = 0x04 # Interrupt on change
 GPINTENB = 0x05
-IOCON = 0x0A  # BANK SEQOP DISSW HEAN ODR INTPOL
-
-INTFA = 0x0E # Interrupt activated flag
-INTFB = 0x0F # Interrupt activated flag
-INTCAPA = 0x10 #Interrupt capture register (resets when read)
-INTCAPB = 0x11 #Interrupt capture register (resets when read)
+IOCON = 0x0A    # BANK SEQOP DISSW HEAN ODR INTPOL
+GPPU = 0x0C     # Pull-up mode
+INTFA = 0x0E    # Interrupt activated flag
+INTFB = 0x0F    # Interrupt activated flag
+INTCAPA = 0x10  # Interrupt capture register (resets when read)
+INTCAPB = 0x11  # Interrupt capture register (resets when read)
 
 GPIO = 0x12 # Input status
 OLAT = 0x14 # output status
 
 class MCP23017():
 
-    def __init__(self, bus=1, i2c_addr = 0x20, ):           # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
+    PUD_DOWN = 21
+    PUD_UP = 22
+
+    IN = 1
+    OUT = 0
+
+    def __init__(self, bus_addr=1, i2c_addr = 0x20):           # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
                                                             # i2c_addr is set with pins A0-A2
         """                                                 
         Class for controlling any number of MCP23017 chips
@@ -33,12 +57,12 @@ class MCP23017():
         """
         
         # Init comms
-        self.bus = smbus2.SMBus(bus)
+        self.bus = smbus2.SMBus(bus_addr)
         self.i2c_addr = i2c_addr
-        self.write_byte = bus.write_byte_data  # Consider write block..!
-        self.read_byte = bus.read_byte_data
-        self.write_word = bus.write_word_data  # Consider write block..!
-        self.read_word = bus.read_word_data
+        self.write_byte = self.bus.write_byte_data  # Consider write block..!
+        self.read_byte = self.bus.read_byte_data
+        self.write_word = self.bus.write_word_data  # Consider write block..!
+        self.read_word = self.bus.read_word_data
         
         # Input state memory
         # state is updated ....... sometimes
@@ -46,8 +70,6 @@ class MCP23017():
         # self.state_b = 0x00
 
         self.setmode()
-
-        print("INITIALIZED")
 
     def setmode(self, arg=''):
         # Init chip for unified I/O
@@ -57,42 +79,69 @@ class MCP23017():
         # 
         BANK   = 0 << 7 # seaquental adresses
         MIRROR = 1 << 6 # INT pins are internally connected
-        SEQOP  = 1 << 5 # seaquental mode disabled
-        DISSLW = 1 << 4 # 
-        HAEN   = 1 << 3 # 
+        SEQOP  = 0 << 5 # seaquental mode disabled
+        DISSLW = 0 << 4 # slew rate controll
+        HAEN   = 1 << 3 # hardware adress controll enable (A0-A2)
         ODR    = 0 << 2 # int pin is not open drain output
-        INTPOL = 1 << 1 # active high
+        INTPOL = 0 << 1 # active high
         #
         # Write the configuration
         setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
-        self.bus.write_word_data(self.i2c_addr, 0x05, setup)
+        try:
+            self.bus.write_word_data(self.i2c_addr, 0x05, setup)
+        except OSError:
+            return False
+        else:
+            return True
 
-    def setup(self, pin_index, mode, pull_up=None):
+    def setup(self, pin_index, mode, pull_up=22):
         # pin_index is the input pin (address)
         # mode is "in or out"
         # pull_up is internal pull_up resistor
-        pass
 
-        if mode ==  1: # INPUT
-            word = self.read_word(self.i2c_addr, IODIRA)
+        # SET MODE
+        word = self.read_word(self.i2c_addr, IODIRA)
+        # INPUT
+        if mode ==  1:
             setBit(word, pin_index)
 
-        elif mode == 0: # OUTPUT
-            word = self.read_word(self.i2c_addr, IODIRA)
+        # OUTPUT
+        elif mode == 0:
             clearBit(word, pin_index)
-        
-        else:
-            raise ValueError
 
-    
+        if mode in [1, 0]:
+            self.write_word(self.i2c_addr, IODIRA, word)
+        else:
+            raise ValueError("invalid mode")
+
+        # SET PULL-UP MODE
+        word = self.read_word(self.i2c_addr, GPPU)
+        # PULL-UP
+        if pull_up == 22:
+            setBit(word, pin_index)
+
+        # PULL-DOWN
+        elif mode == 21:
+            clearBit(word, pin_index)
+
+        if mode in [22, 21]:
+            self.write_word(self.i2c_addr, GPPU, word)
+        else:
+            raise ValueError("invalid pull-up mode")
+
+    def input(self, pin_index):
+        word = self.read_word(self.i2c_addr, OLAT)
+        state = testBit(word, pin_index)
+        return state
+
     def readBit(self, index, address = OLAT):
         word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
-        
-        #blocks = Blocs()
-        #blocks.asByte = self.read(self.i2c_addr, self.INTCAPA, address)
-        #return blocks.index
-        
+
+    def cleanup(self):
+        for pin_index in range(16):
+            self.setup(pin_index, MCP23017.IN, MCP23017.PUD_UP)
+
     def writeBit(self, bit, index, address = OLAT):
         pass
 
@@ -141,37 +190,6 @@ def clearBit(int_type, offset):
 def toggleBit(int_type, offset):
     mask = 1 << offset
     return(int_type ^ mask)
-
-
-# from code example from https://wiki.python.org/moin/BitManipulation 
-# "Bit fields, e.g. for communication protocols"
-
-# c_uint8 = ctypes.c_uint8
-# 
-# class  Blocs_bits( ctypes.LittleEndianStructure ):
-#     _fields_ = [
-#                     ("bit0",    c_uint8, 1),
-#                     ("bit1",    c_uint8, 1),
-#                     ("bit2",    c_uint8, 1),
-#                     ("bit3",    c_uint8, 1),
-#                     ("bit4",    c_uint8, 1),
-#                     ("bit5",    c_uint8, 1),
-#                     ("bit6",    c_uint8, 1),
-#                     ("bit7",    c_uint8, 1),
-#                     ]
-#         
-# class Blocks( ctypes.Union ):
-#     _anonymous_ = ("bit")
-#     _field_ = [
-#         ("bit", Blocks_bits),
-#         ("asByte", c_uint8)
-#         ]
-#     
-## Example:
-# blocks = Blocks()
-# blocks.asByte = 0x2
-
-        
 
 if __name__ == '__main__':
     pass
