@@ -42,19 +42,20 @@ OLAT = 0x14 # output status
 
 class MCP23017():
 
+    """
+    Class for controlling any number of MCP23017 chips
+    Works as an interface and an expansion to smbus2.
+    Specifically brings support for interrupts
+    """
+
     PUD_DOWN = 21
     PUD_UP = 22
 
     IN = 1
     OUT = 0
 
-    def __init__(self, bus_addr=1, i2c_addr = 0x20):           # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
+    def __init__(self, bus_addr=1, i2c_addr = 0x20):        # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
                                                             # i2c_addr is set with pins A0-A2
-        """                                                 
-        Class for controlling any number of MCP23017 chips
-        Works as an interface and an expansion to smbus2.
-        Specifically brings support for interrupts
-        """
         
         # Init comms
         self.bus = smbus2.SMBus(bus_addr)
@@ -130,12 +131,12 @@ class MCP23017():
             raise ValueError("invalid pull-up mode")
 
     def input(self, pin_index):
-        word = self.read_word(self.i2c_addr, OLAT)
+        word = self.read_word(self.i2c_addr, GPIO)
         print(bin(word))        #debug
         state = testBit(word, pin_index)
         return state
 
-    def readBit(self, index, address = OLAT):
+    def readBit(self, index, address = GPIO):
         word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
 
@@ -144,6 +145,8 @@ class MCP23017():
             self.setup(pin_index, MCP23017.IN, MCP23017.PUD_UP)
 
     def writeBit(self, bit, index, address = OLAT):
+        word = self.read_word(self.i2c_addr, address)
+
         pass
 
     # def interrupt(self, queue):
