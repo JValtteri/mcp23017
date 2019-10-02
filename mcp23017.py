@@ -70,7 +70,7 @@ class MCP23017():
         # self.state_a = 0x00
         # self.state_b = 0x00
 
-        self.setmode()
+        #self.setmode()
 
     def setmode(self, arg=''):
         # Init chip for unified I/O
@@ -146,8 +146,12 @@ class MCP23017():
 
     def writeBit(self, bit, index, address = OLAT):
         word = self.read_word(self.i2c_addr, address)
-
         pass
+
+    def readAll(self):
+        for byte_addr in range(0x01, 0x1B):
+            word = self.read_word(self.i2c_addr, GPIO)
+            print(hex(byte_addr), bin(word))        #debug
 
     # def interrupt(self, queue):
     #     # blocks = Blocs()                              # 
