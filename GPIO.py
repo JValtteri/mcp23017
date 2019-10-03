@@ -38,7 +38,7 @@ class GPIO():
 
     @staticmethod
     def setmode(mode=BCM):
-        RGPIO.setmode(mode)
+        ###RGPIO.setmode(mode)  #####   disabled for debug
         GPIO.expanders = (
             MCP23017(
                 bus_addr=1,
@@ -63,7 +63,7 @@ class GPIO():
 
         # INTEGRATED GPIO
         if channel < 100:
-            RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
+            print("PI GPIO") #RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP) ## DEBUG
         
         # EXPANDER 0
         elif channel < 200:
@@ -81,7 +81,7 @@ class GPIO():
     def input(channel):
 
         if channel < 100:
-            return RGPIO.input(channel)
+            print("PI GPIO") # return RGPIO.input(channel) ## DEBUG
 
         # EXPANDER 0
         elif channel < 200:
@@ -97,6 +97,6 @@ class GPIO():
 
     @staticmethod
     def cleanup():
-        GPIO.cleanup()
+        print("PI GPIO") #GPIO.cleanup()    ## DEBUG
         for expander in GPIO.expanders:
             expander.cleanup()
