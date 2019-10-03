@@ -38,6 +38,19 @@ class GPIO():
 
     @staticmethod
     def setmode(mode=BCM):
+
+        GPIO.expanders = []
+        for i2c_addr in range(0x20, 0x28):
+            try:
+                expander = MCP23017(bus_addr=1, i2c_addr=i2c_addr)
+                expander.read_byte(i2c_addr, 0x00)
+                GPIO.expanders.append(expander)
+                print("missed", i2c_addr)
+            except OSError:
+                pass
+                print("missed", i2c_addr)
+
+
         ###RGPIO.setmode(mode)  #####   disabled for debug
         GPIO.expanders = (
             MCP23017(
@@ -58,6 +71,7 @@ class GPIO():
         for expander in GPIO.expanders:
             expander.setmode(mode)
 
+
     @staticmethod
     def setup(channel, mode, pull_up):
 
@@ -77,6 +91,7 @@ class GPIO():
         elif channel < 400:
             GPIO.expanders[1].setup(channel-300, mode, pull_up)
 
+
     @staticmethod
     def input(channel):
 
@@ -94,6 +109,7 @@ class GPIO():
         # EXPANDER 2
         elif channel < 400:
             return GPIO.expanders[2].input(channel-300)
+
 
     @staticmethod
     def cleanup():
