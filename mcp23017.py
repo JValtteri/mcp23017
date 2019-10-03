@@ -95,7 +95,7 @@ class MCP23017():
         else:
             return True
 
-    def setup(self, pin_index, mode, pull_up=22):
+    def setup(self, pin_index, mode=1, pull_up=22):
         # pin_index is the input pin (address)
         # mode is "in or out"
         # pull_up is internal pull_up resistor
@@ -149,7 +149,7 @@ class MCP23017():
         pass
 
     def readAll(self):
-        for byte_addr in range(0x01, 0x1B):
+        for byte_addr in range(0x00, 0x1B):
             word = self.read_word(self.i2c_addr, byte_addr)
             print(hex(byte_addr), bin(word))        #debug
 
