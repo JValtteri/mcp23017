@@ -75,41 +75,48 @@ class GPIO():
     @staticmethod
     def setup(channel, mode, pull_up):
 
-        # INTEGRATED GPIO
-        if channel < 100:
-            print("PI GPIO") #RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP) ## DEBUG
-        
-        # EXPANDER 0
-        elif channel < 200:
-            GPIO.expanders[0].setup(channel-100, mode, pull_up)
-    
-        # EXPANDER 1
-        elif channel < 300:
-            GPIO.expanders[1].setup(channel-200, mode, pull_up)
+        try:
+            # INTEGRATED GPIO
+            if channel < 100:
+                print("PI GPIO") #RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP) ## DEBUG
 
-        # EXPANDER 2
-        elif channel < 400:
-            GPIO.expanders[1].setup(channel-300, mode, pull_up)
+            # EXPANDER 0
+            elif channel < 200:
+                GPIO.expanders[0].setup(channel-100, mode, pull_up)
+
+            # EXPANDER 1
+            elif channel < 300:
+                GPIO.expanders[1].setup(channel-200, mode, pull_up)
+
+            # EXPANDER 2
+            elif channel < 400:
+                GPIO.expanders[1].setup(channel-300, mode, pull_up)
+
+        except IndexError:
+            raise IndexError("GPIO index out of range")
 
 
     @staticmethod
     def input(channel):
 
-        if channel < 100:
-            print("PI GPIO") # return RGPIO.input(channel) ## DEBUG
+        try:
+            if channel < 100:
+                print("PI GPIO") # return RGPIO.input(channel) ## DEBUG
 
-        # EXPANDER 0
-        elif channel < 200:
-            return GPIO.expanders[0].input(channel-100)
-    
-        # EXPANDER 1
-        elif channel < 300:
-            return GPIO.expanders[1].input(channel-200)
+            # EXPANDER 0
+            elif channel < 200:
+                return GPIO.expanders[0].input(channel-100)
 
-        # EXPANDER 2
-        elif channel < 400:
-            return GPIO.expanders[2].input(channel-300)
+            # EXPANDER 1
+            elif channel < 300:
+                return GPIO.expanders[1].input(channel-200)
 
+            # EXPANDER 2
+            elif channel < 400:
+                return GPIO.expanders[2].input(channel-300)
+
+        except IndexError:
+                raise IndexError("GPIO index out of range")
 
     @staticmethod
     def cleanup():
