@@ -95,6 +95,9 @@ class GPIO():
         except IndexError:
             raise IndexError("GPIO index out of range")
 
+        except AttributeError:
+            raise AttributeError("No expanders set up. First set input mode: setmode()")
+
 
     @staticmethod
     def input(channel):
