@@ -41,7 +41,20 @@ class GPIO():
 
     @staticmethod
     def setmode(mode=BCM):
-        RGPIO.setmode(mode)
+
+        GPIO.expanders = []
+        for i2c_addr in range(0x20, 0x28):
+            try:
+                expander = MCP23017(bus_addr=1, i2c_addr=i2c_addr)
+                expander.read_byte(i2c_addr, 0x00)
+                GPIO.expanders.append(expander)
+                print("missed", i2c_addr)
+            except OSError:
+                pass
+                print("missed", i2c_addr)
+
+
+        ###RGPIO.setmode(mode)  #####   disabled for debug
         GPIO.expanders = (
             MCP23017(
                 bus_addr=1,
@@ -61,45 +74,58 @@ class GPIO():
         for expander in GPIO.expanders:
             expander.setmode(mode)
 
+
     @staticmethod
     def setup(channel, mode, pull_up_down):
 
-        # INTEGRATED GPIO
-        if channel < 100:
-            RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
-        
-        # EXPANDER 0
-        elif channel < 200:
-            GPIO.expanders[0].setup(channel-100, mode, pull_up_down)
-    
-        # EXPANDER 1
-        elif channel < 300:
-            GPIO.expanders[1].setup(channel-200, mode, pull_up_down)
+        try:
+            # INTEGRATED GPIO
+            if channel < 100:
+                print("PI GPIO") #RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP) ## DEBUG
 
-        # EXPANDER 2
-        elif channel < 400:
-            GPIO.expanders[1].setup(channel-300, mode, pull_up_down)
+            # EXPANDER 0
+            elif channel < 200:
+                GPIO.expanders[0].setup(channel-100, mode, pull_up_down)
+
+            # EXPANDER 1
+            elif channel < 300:
+                GPIO.expanders[1].setup(channel-200, mode, pull_up_down)
+
+            # EXPANDER 2
+            elif channel < 400:
+                GPIO.expanders[1].setup(channel-300, mode, pull_up_down)
+
+        except IndexError:
+            raise IndexError("GPIO index out of range")
+
+        except AttributeError:
+            raise AttributeError("No expanders set up. First set input mode: setmode()")
+
 
     @staticmethod
     def input(channel):
 
-        if channel < 100:
-            return RGPIO.input(channel)
+        try:
+            if channel < 100:
+                print("PI GPIO") # return RGPIO.input(channel) ## DEBUG
 
-        # EXPANDER 0
-        elif channel < 200:
-            return GPIO.expanders[0].input(channel-100)
-    
-        # EXPANDER 1
-        elif channel < 300:
-            return GPIO.expanders[1].input(channel-200)
+            # EXPANDER 0
+            elif channel < 200:
+                return GPIO.expanders[0].input(channel-100)
 
-        # EXPANDER 2
-        elif channel < 400:
-            return GPIO.expanders[2].input(channel-300)
+            # EXPANDER 1
+            elif channel < 300:
+                return GPIO.expanders[1].input(channel-200)
+
+            # EXPANDER 2
+            elif channel < 400:
+                return GPIO.expanders[2].input(channel-300)
+
+        except IndexError:
+                raise IndexError("GPIO index out of range")
 
     @staticmethod
     def cleanup():
-        GPIO.cleanup()
+        print("PI GPIO") #GPIO.cleanup()    ## DEBUG
         for expander in GPIO.expanders:
             expander.cleanup()
