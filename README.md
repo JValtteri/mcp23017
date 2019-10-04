@@ -23,7 +23,10 @@ Desired properties:
  **) as high as can be achieved with Python3 without 
     endangering the former two.
 
-The module has been desined for the primary purpose of easily expanding the GPIO of projects using RPi.GPIO on Raspberry Pi. This module adds support for MCP23017 expansion chips and a wrapper to enable calling both: RPi.GPIO and MCP23017 as one. This means that no other code changes are required than changeing the import statement from ```from RPi.GPIO import GPIO``` to ```from MCP23017 import GPIO```
+The module has been desined for the primary purpose of easily expanding the GPIO of projects using RPi.GPIO on Raspberry Pi. This module adds support for MCP23017 expansion chips and a wrapper to enable calling both: RPi.GPIO and MCP23017 as one. This means that no other code changes are required than changeing the import statement from ```from RPi.GPIO import GPIO``` to ```from MCP23017 import GPIO```. 
+**THE SYNTAX STAYS THE SAME.**
+
+The internal GPIO pin numbers stay the same. The first expander's GPIO pins are *100..116*, second's *200..216* and so forth. This is to make implementation as simple as possible.
 
 ### Current support:
 
@@ -32,9 +35,10 @@ The module has been desined for the primary purpose of easily expanding the GPIO
  - ```RPI.input()```
  - ```RPI.cleanup()```
 
+Internally the module works exclusively in *word* or *two byte* *(16 bit)* mode.
+
 ### Planned features:
 
  - Interrupts
  - Cashe the state of inputs to speed up read requests
  - Proper support for outputs
-
