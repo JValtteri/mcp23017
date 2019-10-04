@@ -34,6 +34,9 @@ class GPIO():
     IN = 1
     OUT = 0
 
+    HIGH = 1
+    LOW = 0
+
     BCM = RGPIO.BCM
 
     @staticmethod
@@ -59,7 +62,7 @@ class GPIO():
             expander.setmode(mode)
 
     @staticmethod
-    def setup(channel, mode, pull_up):
+    def setup(channel, mode, pull_up_down):
 
         # INTEGRATED GPIO
         if channel < 100:
@@ -67,15 +70,15 @@ class GPIO():
         
         # EXPANDER 0
         elif channel < 200:
-            GPIO.expanders[0].setup(channel-100, mode, pull_up)
+            GPIO.expanders[0].setup(channel-100, mode, pull_up_down)
     
         # EXPANDER 1
         elif channel < 300:
-            GPIO.expanders[1].setup(channel-200, mode, pull_up)
+            GPIO.expanders[1].setup(channel-200, mode, pull_up_down)
 
         # EXPANDER 2
         elif channel < 400:
-            GPIO.expanders[1].setup(channel-300, mode, pull_up)
+            GPIO.expanders[1].setup(channel-300, mode, pull_up_down)
 
     @staticmethod
     def input(channel):
