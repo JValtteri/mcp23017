@@ -1,4 +1,4 @@
-# MCP23017
+# RPi-MCP23017-Lite
 ## a RPI GPIO expansion
 
 So you ran out of GPIO on your Raspberry Pi? 
@@ -23,17 +23,36 @@ Desired properties:
  **) as high as can be achieved with Python3 without 
     endangering the former two.
 
-The module has been desined for the primary purpose of easily expanding the GPIO of projects using RPi.GPIO on Raspberry Pi. This module adds support for MCP23017 expansion chips and a wrapper to enable calling both: RPi.GPIO and MCP23017 as one. This means that no other code changes are required than changeing the import statement from ```from RPi.GPIO import GPIO``` to ```from MCP23017 import GPIO```. 
+The module has been desined for the primary purpose of easily expanding the GPIO of projects using `RPi.GPIO` on Raspberry Pi. This module adds support for **MCP23017** expansion chips and a wrapper to enable calling both: `RPi.GPIO` and `MCP23017` as one. This means that no other code changes are required than changeing the import statement from ```from RPi.GPIO import GPIO``` to ```from MCP23017 import GPIO```. 
 **THE SYNTAX STAYS THE SAME.**
 
 The internal GPIO pin numbers stay the same. The first expander's GPIO pins are *100..116*, second's *200..216* and so forth. This is to make implementation as simple as possible.
 
-### Current support:
+#### THIS LIBRARY ***DOES NOT*** PROVIDE COMPLETE ACCESS TO ALL THE FEATURES OF THE MCP23017 CHIP.
+For complete access refer to other libraries, such as [***smbus2***](https://pypi.org/project/smbus2/) or [***RPi-MCP23017***](https://pypi.org/project/RPi-MCP23017/). 
 
- - ```RPI.setmode()``` (mandatory)
- - ```RPI.setup()```
- - ```RPI.input()```
- - ```RPI.cleanup()```
+### Use:
+
+example:
+```python3
+from MCP23017 import GPIO
+
+gpio_pin = 116
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(gpio_pin, GPIO.IN, GPIO.PUD_UP)
+value = GPIO.input(gpio_pin)
+print(value)
+GPIO.cleanup()
+```
+
+
+#### Currentlu supported functions:
+
+ - ```GPIO.setmode()``` *(mandatory)*
+ - ```GPIO.setup()```
+ - ```GPIO.input()```
+ - ```GPIO.cleanup()```
 
 Internally the module works exclusively in *word* or *two byte* *(16 bit)* mode.
 
