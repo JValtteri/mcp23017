@@ -4,7 +4,7 @@ with open("README.md", "r") as readme:
     long_description = readme.read()
 
 setuptools.setup(
-    name="RPi-GPIO-MCP23017",
+    name="RPi-MCP23017-Lite",
     version="0.0.1",
     author="JValtteri",
     author_email="46611993+JValtteri@users.noreply.github.com",
