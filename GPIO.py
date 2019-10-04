@@ -53,23 +53,7 @@ class GPIO():
                 pass
                 print("missed", i2c_addr)
 
-
-        ###RGPIO.setmode(mode)  #####   disabled for debug
-        GPIO.expanders = (
-            MCP23017(
-                bus_addr=1,
-                i2c_addr=0x20
-            ),
-            MCP23017(
-                bus_addr=1,
-                i2c_addr=0x21
-            ),
-            MCP23017(
-                bus_addr=1,
-                i2c_addr=0x22
-            )
-
-        )
+        RGPIO.setmode(mode)
 
         for expander in GPIO.expanders:
             expander.setmode(mode)
@@ -81,7 +65,7 @@ class GPIO():
         try:
             # INTEGRATED GPIO
             if channel < 100:
-                print("PI GPIO") #RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP) ## DEBUG
+                RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
 
             # EXPANDER 0
             elif channel < 200:
@@ -107,7 +91,7 @@ class GPIO():
 
         try:
             if channel < 100:
-                print("PI GPIO") # return RGPIO.input(channel) ## DEBUG
+                return RGPIO.input(channel)
 
             # EXPANDER 0
             elif channel < 200:
@@ -126,6 +110,6 @@ class GPIO():
 
     @staticmethod
     def cleanup():
-        print("PI GPIO") #GPIO.cleanup()    ## DEBUG
+        GPIO.cleanup()
         for expander in GPIO.expanders:
             expander.cleanup()
