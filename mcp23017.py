@@ -22,6 +22,7 @@
 
 
 import smbus2
+from RPi import GPIO as RGPIO
 # import ctypes
 
 IODIRA = 0x00   # I/O mode (def 0xFF
@@ -37,7 +38,7 @@ INTFB = 0x0F    # Interrupt activated flag
 INTCAPA = 0x10  # Interrupt capture register (resets when read)
 INTCAPB = 0x11  # Interrupt capture register (resets when read)
 
-GPIO = 0x12 # Input status
+EGPIO = 0x12 # Input status # NAME CHANGED FROM GPIO TO GPIO TO FIX NAMESPACE COLLISION
 OLAT = 0x14 # output status
 
 class MCP23017():
@@ -131,12 +132,12 @@ class MCP23017():
             raise ValueError("invalid pull-up mode")
 
     def input(self, pin_index):
-        word = self.read_word(self.i2c_addr, GPIO)
+        word = self.read_word(self.i2c_addr, EGPIO)
         print(bin(word))        #debug
         state = testBit(word, pin_index)
         return state
 
-    def readBit(self, index, address = GPIO):
+    def readBit(self, index, address = EGPIO):
         word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
 
@@ -198,6 +199,125 @@ def clearBit(int_type, offset):
 def toggleBit(int_type, offset):
     mask = 1 << offset
     return(int_type ^ mask)
+
+
+#############################################
+#                                           #
+#  Wrapper class for RPi.GPIO and MCP23017  #
+#                                           #
+#############################################
+
+
+class GPIO():
+    '''
+    Intended to function as a wrapper for mcp23017 and RPi.GPIO, 
+    so thay may be called as one.
+    That is, all inputs, GPIO and MCP expander, may be call on 
+    Raspberry Pi with a unified input pin address space and
+    functions. 
+
+    Intended to work as drop-in replacement for GPIO-only.
+
+    Use:
+    From MCP23017 import GPIO
+
+    no other code changes required.
+    Normal RPi GPIO is pins are XX, 
+    first expander is 1XX, and
+    second expander is 2XX, etc.
+
+    multiplexer automatically diverts the function call to the 
+    right module.
+    '''
+
+    PUD_DOWN = 21
+    PUD_UP = 22
+    
+    IN = 1
+    OUT = 0
+
+    HIGH = 1
+    LOW = 0
+
+    BCM = RGPIO.BCM
+
+    @staticmethod
+    def setmode(mode=BCM):
+
+        GPIO.expanders = []
+        for i2c_addr in range(0x20, 0x28):
+            try:
+                expander = MCP23017(bus_addr=1, i2c_addr=i2c_addr)
+                expander.read_byte(i2c_addr, 0x00)
+                GPIO.expanders.append(expander)
+                print("missed", i2c_addr)
+            except OSError:
+                pass
+                print("missed", i2c_addr)
+
+        RGPIO.setmode(mode)
+
+        for expander in GPIO.expanders:
+            expander.setmode(mode)
+
+
+    @staticmethod
+    def setup(channel, mode, pull_up_down):
+
+        try:
+            # INTEGRATED GPIO
+            if channel < 100:
+                RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
+
+            # EXPANDER 0
+            elif channel < 200:
+                GPIO.expanders[0].setup(channel-100, mode, pull_up_down)
+
+            # EXPANDER 1
+            elif channel < 300:
+                GPIO.expanders[1].setup(channel-200, mode, pull_up_down)
+
+            # EXPANDER 2
+            elif channel < 400:
+                GPIO.expanders[1].setup(channel-300, mode, pull_up_down)
+
+        except IndexError:
+            raise IndexError("GPIO index out of range")
+
+        except AttributeError:
+            raise AttributeError("No expanders set up. First set input mode: setmode()")
+
+
+    @staticmethod
+    def input(channel):
+
+        try:
+            if channel < 100:
+                return RGPIO.input(channel)
+
+            # EXPANDER 0
+            elif channel < 200:
+                return GPIO.expanders[0].input(channel-100)
+
+            # EXPANDER 1
+            elif channel < 300:
+                return GPIO.expanders[1].input(channel-200)
+
+            # EXPANDER 2
+            elif channel < 400:
+                return GPIO.expanders[2].input(channel-300)
+
+        except IndexError:
+                raise IndexError("GPIO index out of range")
+
+    @staticmethod
+    def cleanup():
+        RGPIO.cleanup()
+        for expander in GPIO.expanders:
+            expander.cleanup()
+
+
+
 
 if __name__ == '__main__':
     pass
