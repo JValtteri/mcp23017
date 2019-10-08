@@ -47,7 +47,7 @@ GPIO.cleanup()
 ```
 
 
-#### Currentlu supported functions:
+#### Currently supported functions:
 
  - ```GPIO.setmode()``` *(mandatory)*
  - ```GPIO.setup()```
