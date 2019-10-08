@@ -25,22 +25,6 @@ import smbus2
 from RPi import GPIO as RGPIO
 # import ctypes
 
-IODIRA = 0x00   # I/O mode (def 0xFF
-IODIRB = 0x01   # I/O mode (def 0xFF
-IPOLA = 0x02    # Input polarity
-IPOLB = 0x03
-GPINTENA = 0x04 # Interrupt on change
-GPINTENB = 0x05
-IOCON = 0x0A    # BANK SEQOP DISSW HEAN ODR INTPOL
-GPPU = 0x0C     # Pull-up mode
-INTFA = 0x0E    # Interrupt activated flag
-INTFB = 0x0F    # Interrupt activated flag
-INTCAPA = 0x10  # Interrupt capture register (resets when read)
-INTCAPB = 0x11  # Interrupt capture register (resets when read)
-
-EGPIO = 0x12 # Input status # NAME CHANGED FROM GPIO TO GPIO TO FIX NAMESPACE COLLISION
-OLAT = 0x14 # output status
-
 class MCP23017():
 
     """
@@ -48,6 +32,22 @@ class MCP23017():
     Works as an interface and an expansion to smbus2.
     Specifically brings support for interrupts
     """
+
+    IODIRA = 0x00   # I/O mode (def 0xFF
+    IODIRB = 0x01   # I/O mode (def 0xFF
+    IPOLA = 0x02    # Input polarity
+    IPOLB = 0x03
+    GPINTENA = 0x04 # Interrupt on change
+    GPINTENB = 0x05
+    IOCON = 0x0A    # BANK SEQOP DISSW HEAN ODR INTPOL
+    GPPU = 0x0C     # Pull-up mode
+    INTFA = 0x0E    # Interrupt activated flag
+    INTFB = 0x0F    # Interrupt activated flag
+    INTCAPA = 0x10  # Interrupt capture register (resets when read)
+    INTCAPB = 0x11  # Interrupt capture register (resets when read)
+
+    GPIO = 0x12 # Input status
+    OLAT = 0x14 # output status
 
     PUD_DOWN = 21
     PUD_UP = 22
@@ -102,7 +102,7 @@ class MCP23017():
         # pull_up is internal pull_up resistor
 
         # SET MODE
-        word = self.read_word(self.i2c_addr, IODIRA)
+        word = self.read_word(self.i2c_addr, MCP23017.IODIRA)
         # INPUT
         if mode ==  1:
             setBit(word, pin_index)
@@ -112,12 +112,12 @@ class MCP23017():
             clearBit(word, pin_index)
 
         if mode in [1, 0]:
-            self.write_word(self.i2c_addr, IODIRA, word)
+            self.write_word(self.i2c_addr, MCP23017.IODIRA, word)
         else:
             raise ValueError("invalid mode")
 
         # SET PULL-UP MODE
-        word = self.read_word(self.i2c_addr, GPPU)
+        word = self.read_word(self.i2c_addr, MCP23017.GPPU)
         # PULL-UP
         if pull_up == 22:
             setBit(word, pin_index)
@@ -127,17 +127,17 @@ class MCP23017():
             clearBit(word, pin_index)
 
         if pull_up in [22, 21]:
-            self.write_word(self.i2c_addr, GPPU, word)
+            self.write_word(self.i2c_addr, MCP23017.GPPU, word)
         else:
             raise ValueError("invalid pull-up mode")
 
     def input(self, pin_index):
-        word = self.read_word(self.i2c_addr, EGPIO)
+        word = self.read_word(self.i2c_addr, MCP23017.GPIO)
         print(bin(word))        #debug
         state = testBit(word, pin_index)
         return state
 
-    def readBit(self, index, address = EGPIO):
+    def readBit(self, index, address = MCP23017.GPIO):
         word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
 
