@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JValtteri/mcp23017",
-    packages=setuptools.find_packages('RPi.GPIO', 'smbus2'),
+    packages=setuptools.find_packages(),
     #packages=parse_requirements('requirements.txt', session='hack')
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -20,5 +20,6 @@ setuptools.setup(
         "Development Status :: 2 - Pre-Alpha",
         "Operating System :: OS Independent",
     ],
+    install_requires=['RPi.GPIO', 'smbus2'],
     python_requires='>=3.5',
 )
