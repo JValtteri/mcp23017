@@ -1,3 +1,2 @@
-import mcp23017
-name = "mcp23017"
-vers = "0.0.1a"
+from .mcp23017 import MCP23017
+from .gpio import GPIO
