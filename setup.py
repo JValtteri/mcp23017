@@ -12,7 +12,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JValtteri/mcp23017",
-    packages=setuptools.find_packages(),
+    #packages=setuptools.find_packages(),
+    packages=parse_requirements('requirements.txt', session='hack')
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
