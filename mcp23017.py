@@ -46,7 +46,7 @@ class MCP23017():
     INTCAPA = 0x10  # Interrupt capture register (resets when read)
     INTCAPB = 0x11  # Interrupt capture register (resets when read)
 
-    GPIO = 0x12 # Input status
+    GPIO_REG = 0x12 # Input status
     OLAT = 0x14 # output status
 
     PUD_DOWN = 21
@@ -132,12 +132,12 @@ class MCP23017():
             raise ValueError("invalid pull-up mode")
 
     def input(self, pin_index):
-        word = self.read_word(self.i2c_addr, MCP23017.GPIO)
+        word = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
         print(bin(word))        #debug
         state = testBit(word, pin_index)
         return state
 
-    def readBit(self, index, address = MCP23017.GPIO):
+    def readBit(self, index, address = GPIO_REG):
         word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
 
