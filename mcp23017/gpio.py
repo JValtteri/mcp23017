@@ -3,6 +3,7 @@
 # J.V.Ojala 10.09.2019
 # GPIO
 
+from RPi import GPIO as RGPIO
 import mcp23017
 
 """
@@ -45,7 +46,7 @@ class GPIO():
     HIGH = 1
     LOW = 0
 
-    BCM = mcp23017.RGPIO.BCM
+    BCM = RGPIO.BCM
 
     @staticmethod
     def setmode(mode=BCM):
@@ -61,7 +62,7 @@ class GPIO():
                 pass
                 print("missed", i2c_addr)
 
-        mcp23017.RGPIO.setmode(mode)
+        RGPIO.setmode(mode)
 
         for expander in GPIO.expanders:
             expander.setmode(mode)
@@ -73,7 +74,7 @@ class GPIO():
         try:
             # INTEGRATED GPIO
             if channel < 100:
-                mcp23017.RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
+                RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
 
             # EXPANDER 0
             elif channel < 200:
@@ -99,7 +100,7 @@ class GPIO():
 
         try:
             if channel < 100:
-                return mcp23017.RGPIO.input(channel)
+                return RGPIO.input(channel)
 
             # EXPANDER 0
             elif channel < 200:
@@ -118,6 +119,6 @@ class GPIO():
 
     @staticmethod
     def cleanup():
-        mcp23017.RGPIO.cleanup()
+        RGPIO.cleanup()
         for expander in GPIO.expanders:
             expander.cleanup()

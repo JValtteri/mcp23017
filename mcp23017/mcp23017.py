@@ -22,7 +22,7 @@
 
 
 import smbus2
-from RPi import GPIO as RGPIO
+# from RPi import GPIO as RGPIO
 # import ctypes
 
 class MCP23017():
