@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JValtteri/mcp23017",
-    py_modules=["mcp23017"],
+    packages=["mcp23017"],
     #packages=parse_requirements('requirements.txt', session='hack')
     classifiers=[
         "Programming Language :: Python :: 3",
