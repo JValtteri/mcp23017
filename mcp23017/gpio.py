@@ -57,10 +57,10 @@ class GPIO():
                 expander = mcp23017.MCP23017(bus_addr=1, i2c_addr=i2c_addr)
                 expander.read_byte(i2c_addr, 0x00)
                 GPIO.expanders.append(expander)
-                print("missed", i2c_addr)
+                print("found", i2c_addr)
             except OSError:
                 pass
-                print("missed", i2c_addr)
+                #print("missed", i2c_addr)
 
         RGPIO.setmode(mode)
 

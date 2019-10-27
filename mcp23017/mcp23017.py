@@ -133,7 +133,6 @@ class MCP23017():
 
     def input(self, pin_index):
         word = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
-        print(bin(word))        #debug
         state = testBit(word, pin_index)
         return state
 
@@ -152,7 +151,7 @@ class MCP23017():
     def readAll(self):
         for byte_addr in range(0x00, 0x1B):
             word = self.read_word(self.i2c_addr, byte_addr)
-            print(hex(byte_addr), bin(word))        #debug
+            # print(hex(byte_addr), bin(word))        #debug
 
     # def interrupt(self, queue):
     #     # blocks = Blocs()                              # 
