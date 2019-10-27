@@ -96,7 +96,7 @@ class MCP23017():
         else:
             return True
 
-    def setup(self, pin_index, mode=1, pull_up=22):
+    def setup(self, pin_index, mode=1, pull_up=PUD_UP):
         # pin_index is the input pin (address)
         # mode is "in or out"
         # pull_up is internal pull_up resistor
@@ -105,11 +105,11 @@ class MCP23017():
         word = self.read_word(self.i2c_addr, MCP23017.IODIRA)
         # INPUT
         if mode ==  1:
-            setBit(word, pin_index)
+            word = setBit(word, pin_index)
 
         # OUTPUT
         elif mode == 0:
-            clearBit(word, pin_index)
+            word = clearBit(word, pin_index)
 
         if mode in [1, 0]:
             self.write_word(self.i2c_addr, MCP23017.IODIRA, word)
@@ -120,11 +120,11 @@ class MCP23017():
         word = self.read_word(self.i2c_addr, MCP23017.GPPU)
         # PULL-UP
         if pull_up == 22:
-            setBit(word, pin_index)
+            word = setBit(word, pin_index)
 
         # PULL-DOWN
         elif pull_up == 21:
-            clearBit(word, pin_index)
+            word = clearBit(word, pin_index)
 
         if pull_up in [22, 21]:
             self.write_word(self.i2c_addr, MCP23017.GPPU, word)
