@@ -56,7 +56,7 @@ class MCP23017():
     OUT = 0
 
 
-    def __init__(self, bus_addr=1, i2c_addr = 0x20, interrupt_pin = None):      # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
+    def __init__(self, bus_addr=1, i2c_addr = 0x20, interrupt_pin = 26):      # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
                                                                                 # i2c_addr is set with pins A0-A2
         
         # Init comms
@@ -164,7 +164,10 @@ class MCP23017():
         """
         defines a listener for interrupts on a specific pin.
         """
-        
+        word = self.read_word(self.i2c_addr, MCP23017.GPINTENA)
+        word = setBit(word, channel)
+        self.write_word(self.i2c_addr, MCP23017.GPINTENA, word)
+
         self.callbacks[channel] = callback
 
 
