@@ -84,9 +84,9 @@ class GPIO():
             # EXPANDERS
             else:
                 try:
-                    GPIO.expanders[floor(channel / 100)].setup(channel % 100, mode, pull_up_down)
+                    GPIO.expanders[floor(channel / 100)-1].setup(channel % 100, mode, pull_up_down)
                 except IndexError:
-                    expander_number = floor(channel / 100)
+                    expander_number = floor(channel / 100)-1
                     if expander_number == 0:
                         raise OSError(
                                 "Called expander {}, pin {}, but the expander {} does not exist.".format(expander_number, channel, expander_number),
@@ -95,7 +95,7 @@ class GPIO():
                             )
                     else:
                         raise OSError(
-                                "Called expander {}, pin {}, but the expander {} does not exist.".format(expander_number, channel, expander_number),
+                                "Called expander {}, pin {}, but the expander {} does not exist.\n".format(expander_number, channel, expander_number),
                                 "Please make sure you have your expanders address set correctly"
                             )
 
@@ -115,7 +115,7 @@ class GPIO():
 
             # EXPANDERS
             else:
-                return GPIO.expanders[floor(channel / 100)].input(channel % 100)
+                return GPIO.expanders[floor(channel / 100)-1].input(channel % 100)
 
         except IndexError:
                 raise IndexError("GPIO index out of range")
@@ -137,7 +137,7 @@ class GPIO():
 
             # EXPANDERS
             else:
-                GPIO.expanders[floor(channel / 100)].interrupt_detection(channel % 100, edge_detection, callback, bounce)
+                GPIO.expanders[floor(channel / 100)-1].interrupt_detection(channel % 100, edge_detection, callback, bounce)
 
         except IndexError:
                 raise IndexError("GPIO index out of range")
