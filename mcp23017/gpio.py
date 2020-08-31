@@ -5,6 +5,7 @@
 
 from RPi import GPIO as RGPIO
 import mcp23017
+from math import floor
 
 """
 #############################################
@@ -48,6 +49,10 @@ class GPIO():
 
     BCM = RGPIO.BCM
 
+    RISING = 31
+    FALLING = 32
+    BOTH = 33
+
     @staticmethod
     def setmode(mode=BCM):
 
@@ -57,10 +62,10 @@ class GPIO():
                 expander = mcp23017.MCP23017(bus_addr=1, i2c_addr=i2c_addr)
                 expander.read_byte(i2c_addr, 0x00)
                 GPIO.expanders.append(expander)
-                print("found", i2c_addr)
+                # print("found", i2c_addr)
             except OSError:
                 pass
-                #print("missed", i2c_addr)
+                # print("missed", i2c_addr)
 
         RGPIO.setmode(mode)
 
@@ -76,17 +81,23 @@ class GPIO():
             if channel < 100:
                 RGPIO.setup(channel, mode, pull_up_down=GPIO.PUD_UP)
 
-            # EXPANDER 0
-            elif channel < 200:
-                GPIO.expanders[0].setup(channel-100, mode, pull_up_down)
-
-            # EXPANDER 1
-            elif channel < 300:
-                GPIO.expanders[1].setup(channel-200, mode, pull_up_down)
-
-            # EXPANDER 2
-            elif channel < 400:
-                GPIO.expanders[1].setup(channel-300, mode, pull_up_down)
+            # EXPANDERS
+            else:
+                try:
+                    GPIO.expanders[floor(channel / 100)-1].setup(channel % 100, mode, pull_up_down)
+                except IndexError:
+                    expander_number = floor(channel / 100)-1
+                    if expander_number == 0:
+                        raise OSError(
+                                "Called expander {}, pin {}, but the expander {} does not exist.".format(expander_number, channel, expander_number),
+                                "Please make sure the I2C is enabled in you Rasperry Pi's config,",
+                                "and you have your expanders address set correctly."
+                            )
+                    else:
+                        raise OSError(
+                                "Called expander {}, pin {}, but the expander {} does not exist.\n".format(expander_number, channel, expander_number),
+                                "Please make sure you have your expanders address set correctly"
+                            )
 
         except IndexError:
             raise IndexError("GPIO index out of range")
@@ -102,23 +113,31 @@ class GPIO():
             if channel < 100:
                 return RGPIO.input(channel)
 
-            # EXPANDER 0
-            elif channel < 200:
-                return GPIO.expanders[0].input(channel-100)
-
-            # EXPANDER 1
-            elif channel < 300:
-                return GPIO.expanders[1].input(channel-200)
-
-            # EXPANDER 2
-            elif channel < 400:
-                return GPIO.expanders[2].input(channel-300)
+            # EXPANDERS
+            else:
+                return GPIO.expanders[floor(channel / 100)-1].input(channel % 100)
 
         except IndexError:
                 raise IndexError("GPIO index out of range")
+
 
     @staticmethod
     def cleanup():
         RGPIO.cleanup()
         for expander in GPIO.expanders:
             expander.cleanup()
+
+
+    @staticmethod
+    def add_event_detect(channel, edge_detection, callback, bounce=300):
+
+        try:
+            if channel < 100:
+                RGPIO.add_event_detect(channel, edge_detection, callback, bounce)
+
+            # EXPANDERS
+            else:
+                GPIO.expanders[floor(channel / 100)-1].interrupt_detection(channel % 100, edge_detection, callback, bounce)
+
+        except IndexError:
+                raise IndexError("GPIO index out of range")

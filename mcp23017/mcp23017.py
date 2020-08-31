@@ -22,8 +22,8 @@
 
 
 import smbus2
-# from RPi import GPIO as RGPIO
-# import ctypes
+from RPi import GPIO as RGPIO
+
 
 class MCP23017():
 
@@ -55,8 +55,9 @@ class MCP23017():
     IN = 1
     OUT = 0
 
-    def __init__(self, bus_addr=1, i2c_addr = 0x20):        # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
-                                                            # i2c_addr is set with pins A0-A2
+
+    def __init__(self, bus_addr=1, i2c_addr = 0x20, interrupt_pin = 26):      # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
+                                                                                # i2c_addr is set with pins A0-A2
         
         # Init comms
         self.bus = smbus2.SMBus(bus_addr)
@@ -65,13 +66,32 @@ class MCP23017():
         self.read_byte = self.bus.read_byte_data
         self.write_word = self.bus.write_word_data  # Consider write block..!
         self.read_word = self.bus.read_word_data
+
+        self.interrupts_enabled = False
+        self.interrupt_pin = interrupt_pin
+        self.callbacks = {}
         
         # Input state memory
         # state is updated ....... sometimes
-        # self.state_a = 0x00
-        # self.state_b = 0x00
+        self.state = 0x00
 
         #self.setmode()
+
+        # INTERRUPT DEFINITION
+        #
+        if interrupt_pin is not None:
+            RGPIO.setup(self.interrupt_pin, RGPIO.IN, pull_up_down=RGPIO.PUD_UP)
+
+            if self.interrupts_enabled==True:
+
+                # DEFINE INTERRUPT CALLBACKS
+                RGPIO.add_event_detect(self.interrupt_pin, RGPIO.BOTH, callback=self.interupt_update)
+
+
+    ###########################
+    # RPi.GPIO-like functions #
+    ###########################
+
 
     def setmode(self, arg=''):
         # Init chip for unified I/O
@@ -95,6 +115,7 @@ class MCP23017():
             return False
         else:
             return True
+
 
     def setup(self, pin_index, mode=1, pull_up=PUD_UP):
         # pin_index is the input pin (address)
@@ -131,42 +152,85 @@ class MCP23017():
         else:
             raise ValueError("invalid pull-up mode")
 
+
     def input(self, pin_index):
-        word = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
+        # word = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
+        word = self.state
         state = testBit(word, pin_index)
         return state
 
-    def readBit(self, index, address = GPIO_REG):
-        word = self.read_word(self.i2c_addr, address)
-        return testBit(word, index)
+
+    def interrupt_detection(self, channel, edge_detection, callback, bounce=300):
+        """
+        defines a listener for interrupts on a specific pin.
+        """
+        word = self.read_word(self.i2c_addr, MCP23017.GPINTENA)
+        word = setBit(word, channel)
+        self.write_word(self.i2c_addr, MCP23017.GPINTENA, word)
+
+        self.callbacks[channel] = callback
+
 
     def cleanup(self):
         for pin_index in range(16):
             self.setup(pin_index, MCP23017.IN, MCP23017.PUD_UP)
 
+
+    #################
+    # I/O functions #
+    #################
+
+
     def writeBit(self, bit, index, address = OLAT):
         word = self.read_word(self.i2c_addr, address)
         pass
 
+
+    def readBit(self, index, address = GPIO_REG):
+        word = self.read_word(self.i2c_addr, address)
+        return testBit(word, index)
+
+
     def readAll(self):
         for byte_addr in range(0x00, 0x1B):
             word = self.read_word(self.i2c_addr, byte_addr)
-            # print(hex(byte_addr), bin(word))        #debug
+            return hex(byte_addr), bin(word)
 
-    # def interrupt(self, queue):
-    #     # blocks = Blocs()                              # 
-    #     word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
 
-    #     for bank in [0,1]:                              # Iterate the two banks of bytes
-    #         blocks.asByte = word[bank]                  
-    #         for bit in range(7):                        # length of block is two bytes, a word
-    #             if block[bit] == 1:                     # when the bit is found
-    #                 index = (bank, bit)                 # its location is stored as index    # is this necessary?
-    #                 break                               # and the search stops.
-    #     word = self.read(self.i2c_addr, self.OLAT)      # Reads the Input Register: two bytes of data
-        
-    #     blocks.asByte = word[index[0]]
-    #     queue.put(block.index[1])                       # the index of the 1-bit
+    #######################
+    # Interrupt functions #
+    #######################
+
+
+    def interupt_update(self):
+        """
+        Updates all input values when receiving an interrupt.
+        Also records, where the interrupt came from.
+        """
+
+        # Updates the input state
+        self.state = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
+
+        # Checks for callbacks
+        self.interrup_callback_servise()
+
+
+    def interrup_callback_servise(self):
+        """
+        Provides the callback functionality for pins that have 
+        interrupt detection specifically defined.
+        """
+        interrupt_register =  self.read_word(self.i2c_addr, MCP23017.INTFA)
+        for bit in range(16):                   # Iterates through all interrupt events
+            testBit(interrupt_register, bit)
+            if bit == 1:                        # When an interrupt pin is found
+                if bit in self.callbacks:       # tests if a callback is defined for it.
+                    self.callbacks[bit]()       # If callback is defined, it is excecuted.
+
+
+    #####################
+    # Bitwise functions #
+    #####################
 
 
 # from code example from https://wiki.python.org/moin/BitManipulation 
