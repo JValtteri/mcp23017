@@ -25,7 +25,7 @@ import smbus2
 # from RPi import GPIO as RGPIO
 # import ctypes
 
-class MCP23017():
+cdef class MCP23017():
 
     """
     Class for controlling any number of MCP23017 chips
@@ -33,31 +33,38 @@ class MCP23017():
     Specifically brings support for interrupts
     """
 
-    IODIRA = 0x00   # I/O mode (def 0xFF
-    IODIRB = 0x01   # I/O mode (def 0xFF
-    IPOLA = 0x02    # Input polarity
-    IPOLB = 0x03
-    GPINTENA = 0x04 # Interrupt on change
-    GPINTENB = 0x05
-    IOCON = 0x0A    # BANK SEQOP DISSW HEAN ODR INTPOL
-    GPPU = 0x0C     # Pull-up mode
-    INTFA = 0x0E    # Interrupt activated flag
-    INTFB = 0x0F    # Interrupt activated flag
-    INTCAPA = 0x10  # Interrupt capture register (resets when read)
-    INTCAPB = 0x11  # Interrupt capture register (resets when read)
+    cdef int IODIRA = 0x00   # I/O mode (def 0xFF
+    cdef int IODIRB = 0x01   # I/O mode (def 0xFF
+    cdef int IPOLA = 0x02    # Input polarity
+    cdef int IPOLB = 0x03
+    cdef int GPINTENA = 0x04 # Interrupt on change
+    cdef int GPINTENB = 0x05
+    cdef int IOCON = 0x0A    # BANK SEQOP DISSW HEAN ODR INTPOL
+    cdef int GPPU = 0x0C     # Pull-up mode
+    cdef int INTFA = 0x0E    # Interrupt activated flag
+    cdef int INTFB = 0x0F    # Interrupt activated flag
+    cdef int INTCAPA = 0x10  # Interrupt capture register (resets when read)
+    cdef int INTCAPB = 0x11  # Interrupt capture register (resets when read)
 
-    GPIO_REG = 0x12 # Input status
-    OLAT = 0x14 # output status
+    cdef int GPIO_REG = 0x12 # Input status
+    cdef int OLAT = 0x14 # output status
 
-    PUD_DOWN = 21
-    PUD_UP = 22
+    cdef int PUD_DOWN = 21
+    cdef int PUD_UP = 22
 
-    IN = 1
-    OUT = 0
+    cdef int IN = 1
+    cdef int OUT = 0
 
-    def __init__(self, bus_addr=1, i2c_addr = 0x20):        # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
+    cdef object bus
+    cdef int i2c_addr
+    cdef object write_byte
+    cdef object read_byte
+    cdef object write_word
+    cdef object read_word
+
+    cdef __cinit__(self, int bus_addr=1, int i2c_addr = 0x20):        # Rev 1 Pi uses bus=0, Rev 2 Pi uses bus=1
                                                             # i2c_addr is set with pins A0-A2
-        
+
         # Init comms
         self.bus = smbus2.SMBus(bus_addr)
         self.i2c_addr = i2c_addr
@@ -65,7 +72,7 @@ class MCP23017():
         self.read_byte = self.bus.read_byte_data
         self.write_word = self.bus.write_word_data  # Consider write block..!
         self.read_word = self.bus.read_word_data
-        
+
         # Input state memory
         # state is updated ....... sometimes
         # self.state_a = 0x00
@@ -73,36 +80,36 @@ class MCP23017():
 
         #self.setmode()
 
-    def setmode(self, arg=''):
+    cdef setmode(self, char arg=' '):
         # Init chip for unified I/O
         # Warning!
         # The chip IOCON address schanges from 0x05 to 0x0A
         # when BANK is changed.
-        # 
-        BANK   = 0 << 7 # seaquental adresses
-        MIRROR = 1 << 6 # INT pins are internally connected
-        SEQOP  = 0 << 5 # seaquental mode disabled
-        DISSLW = 0 << 4 # slew rate controll
-        HAEN   = 1 << 3 # hardware adress controll enable (A0-A2)
-        ODR    = 0 << 2 # int pin is not open drain output
-        INTPOL = 0 << 1 # active high
+        #
+        cdef int BANK   = 0 << 7 # seaquental adresses
+        cdef int MIRROR = 1 << 6 # INT pins are internally connected
+        cdef int SEQOP  = 0 << 5 # seaquental mode disabled
+        cdef int DISSLW = 0 << 4 # slew rate controll
+        cdef int HAEN   = 1 << 3 # hardware adress controll enable (A0-A2)
+        cdef int ODR    = 0 << 2 # int pin is not open drain output
+        cdef int INTPOL = 0 << 1 # active high
         #
         # Write the configuration
-        setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
+        cdef int setup = BANK + MIRROR + SEQOP + DISSLW + HAEN + ODR + INTPOL
         try:
-            self.bus.write_word_data(self.i2c_addr, 0x05, setup)
+            self.write_word(self.i2c_addr, 0x05, setup)
         except OSError:
             return False
         else:
             return True
 
-    def setup(self, pin_index, mode=1, pull_up=PUD_UP):
+    cdef setup(self, int pin_index, int mode=1, int pull_up=PUD_UP):
         # pin_index is the input pin (address)
         # mode is "in or out"
         # pull_up is internal pull_up resistor
 
         # SET MODE
-        word = self.read_word(self.i2c_addr, MCP23017.IODIRA)
+        cdef int word = self.read_word(self.i2c_addr, MCP23017.IODIRA)
         # INPUT
         if mode ==  1:
             word = setBit(word, pin_index)
@@ -131,13 +138,13 @@ class MCP23017():
         else:
             raise ValueError("invalid pull-up mode")
 
-    def input(self, pin_index):
-        word = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
-        state = testBit(word, pin_index)
+    cdef input(self, int pin_index):
+        cdef int word = self.read_word(self.i2c_addr, MCP23017.GPIO_REG)
+        cdef int state = testBit(word, pin_index)
         return state
 
-    def readBit(self, index, address = GPIO_REG):
-        word = self.read_word(self.i2c_addr, address)
+    cdef readBit(self, int index, int address = GPIO_REG):
+        cdef int word = self.read_word(self.i2c_addr, address)
         return testBit(word, index)
 
     def cleanup(self):
@@ -154,22 +161,22 @@ class MCP23017():
             # print(hex(byte_addr), bin(word))        #debug
 
     # def interrupt(self, queue):
-    #     # blocks = Blocs()                              # 
+    #     # blocks = Blocs()                              #
     #     word = self.read(self.i2c_addr, self.INTFA)     # Reads the Interrup register: two bytes of data
 
     #     for bank in [0,1]:                              # Iterate the two banks of bytes
-    #         blocks.asByte = word[bank]                  
+    #         blocks.asByte = word[bank]
     #         for bit in range(7):                        # length of block is two bytes, a word
     #             if block[bit] == 1:                     # when the bit is found
     #                 index = (bank, bit)                 # its location is stored as index    # is this necessary?
     #                 break                               # and the search stops.
     #     word = self.read(self.i2c_addr, self.OLAT)      # Reads the Input Register: two bytes of data
-        
+
     #     blocks.asByte = word[index[0]]
     #     queue.put(block.index[1])                       # the index of the 1-bit
 
 
-# from code example from https://wiki.python.org/moin/BitManipulation 
+# from code example from https://wiki.python.org/moin/BitManipulation
 # "Single bits"
 
 # testBit() returns a nonzero result, 2**offset, if the bit at 'offset' is one.
