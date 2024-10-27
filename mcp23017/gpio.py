@@ -51,18 +51,18 @@ class GPIO():
     @staticmethod
     def setmode(mode=BCM):
 
-        found = None
+        found = False
         GPIO.expanders = []
         for i2c_addr in range(0x20, 0x28):
             try:
                 expander = mcp23017.MCP23017(bus_addr=1, i2c_addr=i2c_addr)
                 expander.read_byte(i2c_addr, 0x00)
                 GPIO.expanders.append(expander)
-                found = i2c_addr
+                found = True
             except OSError:
                 pass
-        if found:
-            print("Found i2c address %s" % found )
+        if not found:
+            print("No connected I2C address found")
 
         RGPIO.setmode(mode)
 
